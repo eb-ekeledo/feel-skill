@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>feel: eight feels, one card</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700;750;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ground: #ECEBE8;
+    --ink: #111111;
+    --muted: #6B6A66;
+    --line: #DAD8D3;
+    --surface: #FFFFFF;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--ground); color: var(--ink); }
+  body {
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+    padding: 56px 64px 64px;
+  }
+  .mono { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 500; }
+  header { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 40px; }
+  .kicker { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; }
+  h1 { font-size: 44px; line-height: 1.05; letter-spacing: -0.03em; font-weight: 650; margin: 0; }
+  h1 span { color: var(--muted); font-weight: 500; }
+  .controls { display: flex; gap: 10px; align-items: center; }
+  .seg { display: inline-flex; background: #E2E0DC; border-radius: 999px; padding: 3px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.06); }
+  .seg button, .pause {
+    font: inherit; font-size: 13px; font-weight: 550; border: 0; background: transparent; color: var(--muted);
+    padding: 8px 14px; border-radius: 999px; cursor: pointer; transition: background 160ms, color 160ms, box-shadow 160ms;
+  }
+  .seg button[aria-pressed="true"] { background: #fff; color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06); }
+  .pause { background: #fff; color: var(--ink); box-shadow: 0 0 0 1px var(--line); }
+  button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+  .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 28px 24px; }
+  .tile { display: flex; flex-direction: column; gap: 12px; }
+  .tile-head { display: flex; justify-content: space-between; align-items: baseline; padding: 0 2px; }
+  .tile-name { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+  .tile-meta { font-size: 11px; color: var(--muted); }
+  .stage { height: 276px; border-radius: 20px; background: #F4F3F1; box-shadow: inset 0 0 0 1px #E3E1DC; display: grid; place-items: center; padding: 22px; overflow: hidden; }
+
+  /* The card, styled only by --feel-* values */
+  .card {
+    width: 100%;
+    background: var(--surface);
+    padding: var(--feel-padding);
+    border-radius: var(--feel-radius);
+    box-shadow: var(--feel-highlight), 0 0 0 1px rgba(0,0,0,0.04), var(--feel-shadow);
+    transform-origin: 50% 60%;
+  }
+  .card .label { font-size: 11px; color: rgb(17 17 17 / calc(var(--feel-ink) - 0.25)); letter-spacing: 0.06em; text-transform: uppercase; margin: 0 0 6px; }
+  .card h2 {
+    margin: 0 0 6px;
+    font-size: calc(13px * var(--feel-ratio) * var(--feel-ratio) * var(--feel-ratio));
+    font-weight: calc(var(--feel-weight) + 100);
+    letter-spacing: calc(var(--feel-tracking) - 0.01em);
+    line-height: 1.1;
+  }
+  .card p { margin: 0 0 14px; font-size: 13px; line-height: 1.45; color: rgb(17 17 17 / var(--feel-ink)); letter-spacing: var(--feel-tracking); font-weight: calc(var(--feel-weight) - 50); }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .price { font-size: 14px; font-weight: var(--feel-weight); font-variant-numeric: tabular-nums; letter-spacing: var(--feel-tracking); }
+  .price small { color: rgb(17 17 17 / calc(var(--feel-ink) - 0.3)); font-weight: 450; }
+  .cta {
+    font: inherit; font-size: 13px; font-weight: var(--feel-weight); letter-spacing: var(--feel-tracking);
+    color: #fff; background: #151515; border: 0; cursor: pointer;
+    padding: calc(var(--feel-padding) * 0.45) calc(var(--feel-padding) * 0.85);
+    border-radius: max(2px, calc(var(--feel-radius) - var(--feel-padding) * 0.5));
+    box-shadow: inset 0 1px 0 rgba(255,255,255, calc(var(--feel-highlight-a) * 0.6)), 0 1px 2px rgba(0,0,0,0.2);
+    transition: transform var(--feel-duration) var(--feel-easing), box-shadow var(--feel-duration) var(--feel-easing);
+  }
+  .cta.pressed, .cta:active { transform: scale(var(--feel-press)); box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 0 0 rgba(0,0,0,0); }
+
+  footer { margin-top: 36px; display: flex; justify-content: space-between; color: var(--muted); font-size: 12px; }
+
+  @media (max-width: 1100px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 640px) {
+    body { padding: 28px 16px; }
+    header { flex-direction: column; align-items: flex-start; }
+    h1 { font-size: 32px; }
+    .grid { grid-template-columns: 1fr; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .cta { transition: none; }
+    .cta.pressed { transform: none; }
+  }
+</style>
+</head>
+<body>
+  <header>
+    <div>
+      <p class="kicker mono">feel-skill · demo</p>
+      <h1>Eight feels, one card. <span>Same content, different numbers.</span></h1>
+    </div>
+    <div class="controls">
+      <div class="seg" role="group" aria-label="Intensity">
+        <button type="button" data-i="1" aria-pressed="false">A bit</button>
+        <button type="button" data-i="2" aria-pressed="true">Default</button>
+        <button type="button" data-i="3" aria-pressed="false">Very</button>
+      </div>
+      <button type="button" class="pause" aria-pressed="false">Pause</button>
+    </div>
+  </header>
+
+  <main class="grid" id="grid"></main>
+
+  <footer class="mono">
+    <span>Every value comes from scripts/engine.js. Nothing is hand-tuned on this page.</span>
+    <span>github.com/eb-ekeledo/feel-skill</span>
+  </footer>
+
+<script src="../scripts/engine.js"></script>
+<script>
+(function () {
+  const grid = document.getElementById('grid');
+  const names = Object.keys(Feel.FEELS);
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let intensity = 2;
+  let paused = false;
+  let timer = null;
+
+  const copy = {
+    premium: ['Membership', 'Atelier', 'Private fittings and a tailor on call.', '$240'],
+    tactile: ['Keyboard', 'Switch kit', 'Linear, lubed, and loud in the best way.', '$89'],
+    calm:    ['Focus', 'Evening wind-down', 'Dim the lights, mute the noise, breathe.', '$6'],
+    playful: ['Stickers', 'Sticker drop', 'Twelve new faces for your laptop lid.', '$12'],
+    precise: ['Instrument', 'Caliper Pro', 'Readings to 0.01 mm, every time.', '$129'],
+    soft:    ['Bedding', 'Cloud duvet', 'Washed linen, warm all winter long.', '$180'],
+    bold:    ['Launch', 'Season pass', 'Every game, every seat, all year.', '$499'],
+    quiet:   ['Settings', 'Backups', 'Runs nightly. You will never notice it.', 'Free'],
+  };
+
+  function render() {
+    grid.innerHTML = '';
+    names.forEach((name, idx) => {
+      const r = Feel.compute(name, intensity);
+      const v = r.values;
+      const [label, title, body, price] = copy[name];
+      const tile = document.createElement('section');
+      tile.className = 'tile';
+      tile.innerHTML =
+        '<div class="tile-head"><span class="tile-name">' + name[0].toUpperCase() + name.slice(1) + '</span>' +
+        '<span class="tile-meta mono">' + v.duration + 'ms · r' + v.radius + ' · ' + v.press + '</span></div>' +
+        '<div class="stage"><article class="card">' +
+          '<p class="label">' + label + '</p><h2>' + title + '</h2><p>' + body + '</p>' +
+          '<div class="row"><span class="price">' + price + (price === 'Free' ? '' : ' <small>/ mo</small>') + '</span>' +
+          '<button class="cta" type="button">' + (name === 'quiet' ? 'Manage' : 'Get it') + '</button></div>' +
+        '</article></div>';
+      const card = tile.querySelector('.card');
+      const s = card.style;
+      s.setProperty('--feel-duration', v.duration + 'ms');
+      s.setProperty('--feel-easing', Feel.fmt('easing', v.easing));
+      s.setProperty('--feel-press', v.press);
+      s.setProperty('--feel-radius', v.radius + 'px');
+      s.setProperty('--feel-shadow', '0 ' + v.shadowY + 'px ' + v.shadowBlur + 'px rgba(0,0,0,' + v.shadowAlpha + ')');
+      s.setProperty('--feel-highlight', 'inset 0 1px 0 rgba(255,255,255,' + v.highlight + ')');
+      s.setProperty('--feel-highlight-a', v.highlight);
+      s.setProperty('--feel-weight', v.weight);
+      s.setProperty('--feel-tracking', v.tracking + 'em');
+      s.setProperty('--feel-ratio', v.ratio);
+      s.setProperty('--feel-ink', v.ink);
+      s.setProperty('--feel-padding', v.padding + 'px');
+      grid.appendChild(tile);
+      enter(card, v, idx);
+    });
+  }
+
+  function enter(card, v, idx) {
+    if (reduced) return;
+    card.animate(
+      [{ opacity: 0, transform: 'translateY(14px) scale(0.97)' }, { opacity: 1, transform: 'none' }],
+      { duration: v.duration * 1.6, easing: Feel.fmt('easing', v.easing), delay: idx * 45, fill: 'backwards' }
+    );
+  }
+
+  function pressLoop() {
+    clearInterval(timer);
+    if (reduced || paused) return;
+    let i = 0;
+    timer = setInterval(() => {
+      const btns = grid.querySelectorAll('.cta');
+      const b = btns[i % btns.length];
+      b.classList.add('pressed');
+      setTimeout(() => b.classList.remove('pressed'), 220);
+      i++;
+    }, 420);
+  }
+
+  document.querySelectorAll('.seg button').forEach((b) => {
+    b.addEventListener('click', () => {
+      intensity = Number(b.dataset.i);
+      document.querySelectorAll('.seg button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      render();
+    });
+  });
+  const pause = document.querySelector('.pause');
+  pause.addEventListener('click', () => {
+    paused = !paused;
+    pause.textContent = paused ? 'Play' : 'Pause';
+    pause.setAttribute('aria-pressed', String(paused));
+    pressLoop();
+  });
+
+  const q = new URLSearchParams(location.search);
+  if (q.get('i')) { intensity = Number(q.get('i')); document.querySelector('.seg button[data-i="' + intensity + '"]').click(); }
+  else render();
+  if (q.get('still') === '1') paused = true;
+  pressLoop();
+})();
+</script>
+</body>
+</html>

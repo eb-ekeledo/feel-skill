@@ -1,0 +1,28 @@
+{
+  "skill": "feel",
+  "target": "At least 9 of 10 on each side",
+  "should_trigger": [
+    "make this card feel more premium",
+    "it's too jumpy, calm it down",
+    "the button feels cheap",
+    "give the toggle a more tactile press",
+    "playful but not childish",
+    "this dashboard should feel more precise, like a pro tool",
+    "softer, rounder, cosier",
+    "make the hero feel bolder",
+    "the settings page is too loud, make it quieter",
+    "a bit more satisfying to click"
+  ],
+  "should_not_trigger": [
+    "pick a brand colour palette",
+    "fix this TypeScript error",
+    "add a dark mode toggle",
+    "make the logo bigger",
+    "write the button copy",
+    "add a loading spinner to the form",
+    "convert this to Tailwind",
+    "design a logo for a coffee shop",
+    "make this layout responsive",
+    "what font pairs with Inter?"
+  ]
+}
