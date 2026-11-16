@@ -1,6 +1,6 @@
 Feel: tactile (intensity 1)
 
-| Property | From | To |
+| Property | Baseline | Feel |
 | --- | --- | --- |
 | Transition duration | 220ms | 190ms |
 | Easing curve | cubic-bezier(0.2, 0, 0, 1) | cubic-bezier(0.25, 0, 0, 1) |
@@ -26,8 +26,31 @@ Feel: tactile (intensity 1)
   --feel-tracking: 0em;
   --feel-ratio: 1.2;
   --feel-ink: 0.89;
+  --feel-text: rgb(17 17 17 / 0.89);
   --feel-padding: 16px;
 }
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --feel-shadow: 0 4px 10px rgba(0, 0, 0, 0.28);
+    --feel-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.13);
+    --feel-text: rgb(242 242 240 / 0.89);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --feel-press: 1;
+    --feel-easing: linear;
+  }
+}
+```
+
+```txt
+// Tailwind
+surface: rounded-[12px] p-[16px] shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_4px_10px_rgba(0,0,0,0.14)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.13),0_4px_10px_rgba(0,0,0,0.28)] transition duration-[190ms] ease-[cubic-bezier(0.25,0,0,1)]
+text: font-[550] tracking-[0em] text-[rgb(17_17_17/0.89)] dark:text-[rgb(242_242_240/0.89)]
+press: active:scale-[0.955] motion-reduce:transition-none motion-reduce:active:scale-100
 ```
 
 ```js

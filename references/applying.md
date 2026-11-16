@@ -18,7 +18,7 @@ The engine prints custom properties. Wire them up once, then a feel change is ju
   letter-spacing: var(--feel-tracking);
   font-size: calc(1rem * var(--feel-ratio) * var(--feel-ratio));
 }
-.card p { color: rgb(17 17 17 / var(--feel-ink)); }
+.card p { color: var(--feel-text); } /* dark text in light mode, light text in dark mode */
 .button { font-weight: var(--feel-weight); border-radius: calc(var(--feel-radius) - 4px); }
 .button:active { transform: scale(var(--feel-press)); }
 

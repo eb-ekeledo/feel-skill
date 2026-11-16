@@ -1,20 +1,37 @@
 :root {
   --feel-duration: 420ms;
   --feel-easing: cubic-bezier(0.4, 0, 0.2, 1);
+  --feel-press: 0.99;
   --feel-radius: 16px;
   --feel-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
   --feel-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.04);
   --feel-weight: 450;
+  --feel-tracking: 0.005em;
+  --feel-ratio: 1.15;
   --feel-ink: 0.78;
+  --feel-text: rgb(17 17 17 / 0.78);
   --feel-padding: 22px;
 }
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --feel-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    --feel-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.02);
+    --feel-text: rgb(242 242 240 / 0.78);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --feel-press: 1;
+    --feel-easing: linear;
+  }
+}
+
 .toast {
   padding: var(--feel-padding);
   border-radius: var(--feel-radius);
   box-shadow: var(--feel-highlight), var(--feel-shadow);
   transition: transform var(--feel-duration) var(--feel-easing);
 }
-.toast p { color: rgb(17 17 17 / var(--feel-ink)); font-weight: var(--feel-weight); }
-@media (prefers-reduced-motion: reduce) {
-  .toast { transition: opacity var(--feel-duration) linear; }
-}
+.toast p { color: var(--feel-text); font-weight: var(--feel-weight); }

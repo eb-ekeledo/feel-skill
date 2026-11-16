@@ -47,6 +47,39 @@ for (const combo of combos) {
   }
 }
 
+console.log('1b. Dark mode keeps AA contrast and sane shadows');
+function contrastDark(alpha) {
+  const lin = (x) => (x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4));
+  const mix = (fg, bg) => Math.round(fg * alpha + bg * (1 - alpha)) / 255;
+  const L = 0.2126 * lin(mix(242, 18)) + 0.7152 * lin(mix(242, 18)) + 0.0722 * lin(mix(240, 18));
+  const B = lin(18 / 255);
+  return (L + 0.05) / (B + 0.05);
+}
+for (const combo of combos) {
+  for (const intensity of [1, 2, 3]) {
+    const r = Feel.compute(combo, intensity);
+    const id = combo.join('+') + '@' + intensity;
+    const cr = contrastDark(r.values.ink);
+    if (cr < 4.5) fail(`${id} dark text contrast ${cr.toFixed(2)} is under AA`); else pass();
+    const d = Feel.darkValues(r.values);
+    if (!(d.shadowAlpha >= r.values.shadowAlpha && d.shadowAlpha <= Feel.DARK.shadowMax)) fail(`${id} dark shadow ${d.shadowAlpha} out of range`); else pass();
+    const css = Feel.css(r);
+    if (!css.includes('prefers-color-scheme: dark') || !css.includes('prefers-reduced-motion: reduce')) fail(`${id} CSS is missing the dark or reduced-motion block`); else pass();
+    const tw = Object.values(Feel.tailwind(r)).join(' ');
+    for (const needle of [`rounded-[${r.values.radius}px]`, `duration-[${r.values.duration}ms]`, `active:scale-[${r.values.press}]`, `font-[${r.values.weight}]`]) {
+      if (!tw.includes(needle)) fail(`${id} Tailwind output is missing ${needle}`); else pass();
+    }
+  }
+}
+
+console.log('1c. Plain words map to the right feels (evals/words.json)');
+const words = JSON.parse(fs.readFileSync(path.join(root, 'evals', 'words.json'), 'utf8')).cases;
+for (const w of words) {
+  const got = Feel.interpret(w.say);
+  const same = JSON.stringify([...got.feels].sort()) === JSON.stringify([...w.feels].sort()) && (w.feels.length === 0 || got.intensity === w.intensity);
+  if (!same) fail(`"${w.say}" read as ${JSON.stringify(got)}, expected ${JSON.stringify(w.feels)} @${w.intensity}`); else pass();
+}
+
 console.log('2. Same input, same output (3 runs each)');
 for (const combo of combos) {
   const a = JSON.stringify(Feel.compute(combo, 2));
