@@ -6,7 +6,7 @@
 
 ## What you get
 
-Say "make this card calmer and a bit more tactile". Claude maps the words to feels, runs the engine, and shows you this before touching the code:
+Say "make this card calmer and a bit more tactile". Claude passes your sentence to the engine, which reads the feel words the same way every time, and shows you this before touching the code:
 
 | Property | From | To |
 | --- | --- | --- |
@@ -24,8 +24,11 @@ Then it applies the same numbers as CSS custom properties, Tailwind values or a 
 - **8 feels, 15 values each**, across motion, press, depth, shape, type and density.
 - **Blends.** `calm + tactile` lands between the two.
 - **Intensity.** "a bit", default or "very".
+- **Reads plain sentences.** "too jumpy", "feels cheap" and "less bouncy" all map to the right feel, in code, not by guesswork.
+- **Dark mode and reduced motion included.** The CSS comes with a dark-mode block (deeper shadows, softer highlight, light text at the same contrast) and a reduced-motion block (no press scale).
+- **Tailwind classes ready to paste**, including `dark:` and `motion-reduce:` variants.
 - **Deterministic.** The numbers come from a small engine, not from the model's imagination. Same words, same values, every time.
-- **Safe.** Every value stays inside bounds: durations 120 to 600 ms, shadows 4% to 24%, text contrast always WCAG AA.
+- **Safe.** Every value stays inside bounds: durations 120 to 600 ms, shadows 4% to 24%, text contrast always WCAG AA in light and dark.
 
 ## Install
 
@@ -50,9 +53,11 @@ calm down this onboarding, it's too jumpy
 Or run the engine yourself:
 
 ```bash
+node scripts/feel.js --say "the toggle feels flat, make it a bit more tactile"
 node scripts/feel.js "calm + tactile" --intensity 2
 node scripts/feel.js premium --intensity 3 --format css
 node scripts/feel.js playful --format motion
+node scripts/feel.js precise --format tailwind
 ```
 
 See [`examples/`](examples) for three before and after edits (plain CSS, Tailwind, Motion).
@@ -66,7 +71,7 @@ Open [`demo/index.html`](demo/index.html) in a browser. It shows one card in all
 ## How it works
 
 ```
-"make it calmer"  →  word map (SKILL.md)  →  feel: calm, intensity 2
+"make it calmer"  →  feel.js --say         →  feel: calm, intensity 2
                   →  scripts/engine.js    →  15 values, blended and clamped
                   →  change table + CSS / Tailwind / Motion edit
 ```
@@ -79,7 +84,7 @@ Each feel's character, signature moves, do and don't live in [`references/feels/
 node scripts/check.js
 ```
 
-The checks cover every feel and every two-feel blend at three intensities: value bounds, grid rounding, AA contrast, no overshoot except playful, the same output on repeated runs, and examples that match the engine. See [`evals/`](evals) for trigger tests and the blind comparison plan.
+The checks cover every feel and every two-feel blend at three intensities: value bounds, grid rounding, AA contrast in light and dark, no overshoot except playful, sentence reading, the same output on repeated runs, and examples that match the engine. See [`evals/`](evals) for trigger tests and the blind comparison plan.
 
 ## Part of a set
 

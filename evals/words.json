@@ -1,0 +1,17 @@
+{
+  "note": "Plain-language requests and the feels + intensity the engine must read from them. Checked by scripts/check.js.",
+  "cases": [
+    { "say": "make this card feel more premium", "feels": ["premium"], "intensity": 2 },
+    { "say": "it's too jumpy, calm it down", "feels": ["calm"], "intensity": 2 },
+    { "say": "the button feels cheap", "feels": ["premium"], "intensity": 2 },
+    { "say": "give the toggle a bit more tactile press", "feels": ["tactile"], "intensity": 1 },
+    { "say": "playful but not childish", "feels": ["playful"], "intensity": 2 },
+    { "say": "this dashboard should feel really precise, like a pro tool", "feels": ["precise"], "intensity": 3 },
+    { "say": "softer and rounder", "feels": ["soft"], "intensity": 2 },
+    { "say": "make the hero bolder", "feels": ["bold"], "intensity": 2 },
+    { "say": "the settings page is too loud, make it quieter", "feels": ["quiet"], "intensity": 2 },
+    { "say": "less bouncy please", "feels": ["calm"], "intensity": 2 },
+    { "say": "slightly calmer and more tactile", "feels": ["calm", "tactile"], "intensity": 1 },
+    { "say": "fix this TypeScript error", "feels": [], "intensity": 2 }
+  ]
+}

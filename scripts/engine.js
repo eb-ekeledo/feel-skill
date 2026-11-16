@@ -61,6 +61,49 @@
     ratio: 'Type scale ratio', ink: 'Text contrast', padding: 'Base padding',
   };
 
+  // Plain words to feels. "less X" moves toward the listed opposite.
+  const WORDS = {
+    premium: ['premium', 'expensive', 'luxurious', 'luxury', 'refined', 'high-end', 'high end', 'classy', 'elegant', 'cheap'],
+    tactile: ['tactile', 'clicky', 'physical', 'pressable', 'squishy', 'satisfying', 'flat', 'touchable'],
+    calm: ['calm', 'calmer', 'relaxing', 'relaxed', 'slower', 'jumpy', 'breathe', 'busy', 'frantic', 'chill'],
+    playful: ['playful', 'fun', 'bouncy', 'friendly', 'cheeky', 'delightful', 'joyful', 'boring'],
+    precise: ['precise', 'sharp', 'technical', 'pro', 'crisp', 'exact', 'tool-like', 'snappy', 'sloppy'],
+    soft: ['soft', 'softer', 'gentle', 'rounded', 'rounder', 'pillowy', 'cosy', 'cozy', 'warm', 'harsh'],
+    bold: ['bold', 'bolder', 'loud', 'punchy', 'confident', 'graphic', 'strong', 'timid', 'weak'],
+    quiet: ['quiet', 'quieter', 'subtle', 'minimal', 'invisible', 'understated', 'noisy', 'shouty'],
+  };
+  // Words that describe the problem ("feels cheap", "too jumpy") map to the cure listed above;
+  // "less X" maps to the opposite feel.
+  const OPPOSITE = { premium: 'quiet', tactile: 'quiet', calm: 'bold', playful: 'precise', precise: 'soft', soft: 'precise', bold: 'quiet', quiet: 'bold' };
+  const LESS_BOUNCY = { bouncy: 'calm', loud: 'quiet', flat: 'tactile', busy: 'calm', jumpy: 'calm', round: 'precise', rounded: 'precise', sharp: 'soft', heavy: 'quiet' };
+
+  function interpret(sentence) {
+    const text = ' ' + String(sentence).toLowerCase().replace(/[^a-z\s-]/g, ' ').replace(/\s+/g, ' ') + ' ';
+    const found = [];
+    const add = (f) => { if (!found.includes(f)) found.push(f); };
+    // "less X" / "not so X" / "too X" first
+    const lessRe = /(?:less|not so|not as|too)\s+([a-z-]+)/g;
+    let m;
+    const consumed = new Set();
+    while ((m = lessRe.exec(text))) {
+      const w = m[1];
+      consumed.add(w);
+      if (LESS_BOUNCY[w]) { add(LESS_BOUNCY[w]); continue; }
+      const feel = Object.keys(WORDS).find((f) => WORDS[f].includes(w));
+      if (feel) add(m[0].startsWith('too') && ['jumpy', 'busy', 'frantic', 'harsh', 'noisy', 'shouty', 'sloppy', 'boring', 'timid', 'weak', 'flat', 'cheap'].includes(w) ? feel : OPPOSITE[feel]);
+    }
+    for (const [feel, list] of Object.entries(WORDS)) {
+      for (const w of list) {
+        if (consumed.has(w)) continue;
+        if (text.includes(' ' + w + ' ')) add(feel);
+      }
+    }
+    let intensity = 2;
+    if (/\b(a bit|a little|slightly|a touch|somewhat|bit more|little more)\b/.test(text)) intensity = 1;
+    if (/\b(very|really|much|way|super|extremely|a lot|so much|lot more|much more)\b/.test(text)) intensity = 3;
+    return { feels: found.slice(0, 2), intensity, dropped: found.slice(2) };
+  }
+
   const round = (v, s) => Math.round(Math.round(v / s) * s * 1e6) / 1e6;
   const clamp = (v, [lo, hi]) => Math.min(hi, Math.max(lo, v));
   const r3 = (v) => Math.round(v * 1000) / 1000;
@@ -115,8 +158,19 @@
     return rows;
   }
 
-  function css(result, selector = ':root') {
+  // Dark surfaces swallow shadows, so they get stronger; text flips to a light ink at the same contrast step.
+  const DARK = { surface: '#121212', ink: [242, 242, 240], shadowBoost: 2, shadowMax: 0.48 };
+
+  function darkValues(v) {
+    return {
+      shadowAlpha: Math.min(DARK.shadowMax, round(v.shadowAlpha * DARK.shadowBoost, 0.01)),
+      highlight: round(v.highlight * 0.5, 0.01), // a white highlight reads twice as bright on dark
+    };
+  }
+
+  function css(result, selector = ':root', opts = {}) {
     const v = result.values;
+    const d = darkValues(v);
     const lines = [
       '--feel-duration: ' + v.duration + 'ms;',
       '--feel-easing: ' + fmt('easing', v.easing) + ';',
@@ -128,9 +182,36 @@
       '--feel-tracking: ' + v.tracking + 'em;',
       '--feel-ratio: ' + v.ratio + ';',
       '--feel-ink: ' + v.ink + ';',
+      '--feel-text: rgb(17 17 17 / ' + v.ink + ');',
       '--feel-padding: ' + v.padding + 'px;',
     ];
-    return selector + ' {\n  ' + lines.join('\n  ') + '\n}';
+    let out = selector + ' {\n  ' + lines.join('\n  ') + '\n}';
+    if (opts.full !== false) {
+      out += '\n\n@media (prefers-color-scheme: dark) {\n  ' + selector + ' {\n' +
+        '    --feel-shadow: 0 ' + v.shadowY + 'px ' + v.shadowBlur + 'px rgba(0, 0, 0, ' + d.shadowAlpha + ');\n' +
+        '    --feel-highlight: inset 0 1px 0 rgba(255, 255, 255, ' + d.highlight + ');\n' +
+        '    --feel-text: rgb(' + DARK.ink.join(' ') + ' / ' + v.ink + ');\n  }\n}' +
+        '\n\n@media (prefers-reduced-motion: reduce) {\n  ' + selector + ' {\n' +
+        '    --feel-press: 1;\n    --feel-easing: linear;\n  }\n}';
+    }
+    return out;
+  }
+
+  /** Tailwind arbitrary-value classes, so nobody converts numbers by hand. */
+  function tailwind(result) {
+    const v = result.values;
+    const d = darkValues(v);
+    const e = v.easing.join(',');
+    return {
+      surface: [
+        'rounded-[' + v.radius + 'px]', 'p-[' + v.padding + 'px]',
+        'shadow-[inset_0_1px_0_rgba(255,255,255,' + v.highlight + '),0_' + v.shadowY + 'px_' + v.shadowBlur + 'px_rgba(0,0,0,' + v.shadowAlpha + ')]',
+        'dark:shadow-[inset_0_1px_0_rgba(255,255,255,' + d.highlight + '),0_' + v.shadowY + 'px_' + v.shadowBlur + 'px_rgba(0,0,0,' + d.shadowAlpha + ')]',
+        'transition', 'duration-[' + v.duration + 'ms]', 'ease-[cubic-bezier(' + e + ')]',
+      ].join(' '),
+      text: ['font-[' + v.weight + ']', 'tracking-[' + v.tracking + 'em]', 'text-[rgb(17_17_17/' + v.ink + ')]', 'dark:text-[rgb(242_242_240/' + v.ink + ')]'].join(' '),
+      press: ['active:scale-[' + v.press + ']', 'motion-reduce:transition-none', 'motion-reduce:active:scale-100'].join(' '),
+    };
   }
 
   function motion(result) {
@@ -142,7 +223,7 @@
     };
   }
 
-  const api = { NEUTRAL, FEELS, BOUNDS, STEP, INTENSITY, LABELS, compute, table, css, motion, fmt, parse };
+  const api = { NEUTRAL, FEELS, BOUNDS, STEP, INTENSITY, LABELS, WORDS, DARK, compute, table, css, tailwind, motion, fmt, parse, interpret, darkValues };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.Feel = api;
 })(typeof window !== 'undefined' ? window : globalThis);
